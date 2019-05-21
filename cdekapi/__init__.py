@@ -4,7 +4,7 @@ from hashlib import md5
 import requests
 from cdekapi import calc_dictionaries
 
-VERSION = (0, 0, 1)
+VERSION = (0, 0, 2)
 
 
 def get_version():
