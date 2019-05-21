@@ -102,3 +102,24 @@ class CdekApi:
             data['modeId'] = mode_id
 
         return self.run('calc', data)
+
+    def calc_price_num(self,
+                       sender_city_id,
+                       receiver_city_id,
+                       goods,
+                       date_execute=None,
+                       tariff_id=136,
+                       tariff_list=None,
+                       mode_id=None,
+                       currency='RUB',
+                       services=None):
+        res = self.calc_price(sender_city_id,
+                              receiver_city_id,
+                              goods,
+                              date_execute,
+                              tariff_id,
+                              tariff_list,
+                              mode_id,
+                              currency,
+                              services)
+        return int(res['result']['price'])

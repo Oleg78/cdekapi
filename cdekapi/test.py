@@ -37,11 +37,12 @@ class SimpleTest(unittest.TestCase):
             'services':  [
                 {
                     'id':  2,
-                    'param':  2000
+                    'param':  3000
                 }
             ]
         }
         res = self.api.run('calc', data)
+        print(res)
         self.assertEqual(int(res['result']['deliveryPeriodMin']), 1)
         self.assertEqual(res['result']['deliveryDateMin'], (dt + delta).isoformat())
         self.assertEqual(int(res['result']['tariffId']), 136)
@@ -68,6 +69,7 @@ class SimpleTest(unittest.TestCase):
         }
         with self.assertRaises(CdekAPIError) as e: 
             self.api.run('calc', data)
+        print(e.exception.args[0])
         self.assertEqual(e.exception.args[0]['error'][0]['code'], 3)
 
     def test_calc(self):
@@ -80,8 +82,36 @@ class SimpleTest(unittest.TestCase):
                     },
                 ]
         res = self.api.calc_price(44, 137, goods)
+        print(res)
         self.assertEqual(int(res['result']['deliveryPeriodMin']), 1)
         self.assertEqual(int(res['result']['tariffId']), 136)
+
+    def test_calc_num(self):
+        goods = [
+                    {
+                        'weight':  0.3,
+                        'length':  10,
+                        'width':  7,
+                        'height':  5
+                    },
+                ]
+        res = self.api.calc_price_num(44, 137, goods)
+        print(res)
+        self.assertGreater(res, 0)
+
+    def test_calc_hr_failed(self):
+        goods = [
+                    {
+                        'weight':  0.3,
+                        'length':  10,
+                        'width':  7,
+                        'height':  5
+                    },
+                ]
+        with self.assertRaises(CdekAPIError) as e:
+            code, res = self.api.calc_price_num(44, 269, goods, tariff_id=7)
+        print(e.exception.args[0])
+        self.assertEqual(e.exception.args[0]['error'][0]['code'], 3)
 
 
 if __name__ == '__main__': 
