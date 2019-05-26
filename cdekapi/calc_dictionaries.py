@@ -6,14 +6,34 @@ delivery_types = {
 }
 
 tariffs = {
-    8: {
-        'name': 'Международный экспресс грузы',
+    1: {
+        'name': 'Экспресс лайт дверь-дверь',
         'weight restriction': 30,
         'delivery type': 1
     },
     7: {
         'name': 'Международный экспресс документы',
         'weight restriction': 1.5,
+        'delivery type': 1
+    },
+    8: {
+        'name': 'Международный экспресс грузы',
+        'weight restriction': 30,
+        'delivery type': 1
+    },
+    10: {
+        'name': 'Экспресс лайт склад-склад',
+        'weight restriction': 30,
+        'delivery type': 4
+    },
+    11: {
+        'name': 'Экспресс лайт склад-дверь',
+        'weight restriction': 30,
+        'delivery type': 3
+    },
+    59: {
+        'name': 'Супер-экспресс до 12',
+        'weight restriction': 5,
         'delivery type': 1
     },
     136: {
