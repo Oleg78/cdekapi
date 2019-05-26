@@ -41,7 +41,7 @@ class SimpleTest(unittest.TestCase):
                 }
             ]
         }
-        res = self.api.run('calc', data)
+        res = self.api.run('calc_price', data)
         print(res)
         self.assertEqual(int(res['result']['deliveryPeriodMin']), 1)
         self.assertEqual(res['result']['deliveryDateMin'], (dt + delta).isoformat())
@@ -68,11 +68,11 @@ class SimpleTest(unittest.TestCase):
                 ],
         }
         with self.assertRaises(CdekAPIError) as e: 
-            self.api.run('calc', data)
+            self.api.run('calc_price', data)
         print(e.exception.args[0])
         self.assertEqual(e.exception.args[0]['error'][0]['code'], 3)
 
-    def test_calc(self):
+    def test_calc_price(self):
         goods = [
                     {
                         'weight':  0.3,
@@ -81,10 +81,42 @@ class SimpleTest(unittest.TestCase):
                         'height':  5
                     },
                 ]
-        res = self.api.calc_price(44, 137, goods)
+        tariffs = [
+            {'id': 136, 'priority': 1},
+            {'id': 137, 'priority': 2},
+            {'id': 233, 'priority': 3},
+            {'id': 234, 'priority': 4},
+            {'id': 291, 'priority': 5},
+            {'id': 294, 'priority': 6}
+        ]
+        res = self.api.calc_price(44, 137, goods, tariff_list=tariffs)
         print(res)
         self.assertEqual(int(res['result']['deliveryPeriodMin']), 1)
         self.assertEqual(int(res['result']['tariffId']), 136)
+
+    def test_calc_prices(self):
+        goods = [
+                    {
+                        'weight':  0.3,
+                        'length':  10,
+                        'width':  7,
+                        'height':  5
+                    },
+                ]
+        tariffs = [
+            {'id': 136},
+            {'id': 137},
+            {'id': 233},
+            {'id': 234},
+            {'id': 291},
+            {'id': 294},
+            {'id': 59},
+            {'id': 11},
+        ]
+        res = self.api.calc_prices(44, 137, goods, tariff_list=tariffs)
+        print(res)
+        self.assertEqual(int(res['result'][0]['status']), True)
+        self.assertEqual(int(res['result'][4]['status']), False)
 
     def test_calc_num(self):
         goods = [

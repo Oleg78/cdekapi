@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='cdekapi',
-      version='0.0.2',
+      version='0.0.3',
       description='CDEK API',
       url='https://github.com/Oleg78/cdekapi.git',
       author='Oleg78',
