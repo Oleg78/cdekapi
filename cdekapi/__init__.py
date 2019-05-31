@@ -82,6 +82,8 @@ class CdekApi:
             delta = datetime.timedelta(days=1)
             dt = datetime.date.today() + delta
             date_execute = f'{dt.year}-{dt.month}-{dt.day}'
+        else:
+            date_execute = f'{date_execute.year}-{date_execute.month}-{date_execute.day}'
 
         data = {
             'version':  '1.0',
@@ -120,6 +122,8 @@ class CdekApi:
             delta = datetime.timedelta(days=1)
             dt = datetime.date.today() + delta
             date_execute = f'{dt.year}-{dt.month}-{dt.day}'
+        else:
+            date_execute = f'{date_execute.year}-{date_execute.month}-{date_execute.day}'
 
         data = {
             'version':  '1.0',
