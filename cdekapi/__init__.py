@@ -4,7 +4,7 @@ from hashlib import md5
 import requests
 from cdekapi import calc_dictionaries
 
-VERSION = (0, 0, 3)
+VERSION = (0, 0, 4)
 
 
 def get_version():
@@ -76,7 +76,8 @@ class CdekApi:
                    tariff_list=None,
                    mode_id=None,
                    currency='RUB',
-                   services=None):
+                   services=None,
+                   decimal_places=0):
 
         if not date_execute:
             delta = datetime.timedelta(days=1)
@@ -105,7 +106,10 @@ class CdekApi:
         if mode_id:
             data['modeId'] = mode_id
 
-        return self.run('calc_price', data)
+        res = self.run('calc_price', data)
+        res['result']['price'] = round(float(res['result']['price']), decimal_places)
+
+        return res
 
     def calc_prices(self,
                     sender_city_id,
@@ -116,7 +120,8 @@ class CdekApi:
                     tariff_list=None,
                     mode_id=None,
                     currency='RUB',
-                    services=None):
+                    services=None,
+                    decimal_places=0):
 
         if not date_execute:
             delta = datetime.timedelta(days=1)
@@ -145,7 +150,12 @@ class CdekApi:
         if mode_id:
             data['modeId'] = mode_id
 
-        return self.run('calc_prices', data)
+        res = self.run('calc_prices', data)
+        for r in res['result']:
+            if r['status']:
+                r['result']['price'] = round(float(r['result']['price']), decimal_places)
+
+        return res
 
     def calc_price_num(self,
                        sender_city_id,
