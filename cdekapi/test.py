@@ -94,6 +94,35 @@ class SimpleTest(unittest.TestCase):
         self.assertEqual(int(res['result']['deliveryPeriodMin']), 1)
         self.assertEqual(int(res['result']['tariffId']), 136)
 
+    def test_calc_price_round(self):
+        goods = [
+            {
+                'weight': 0.3,
+                'length': 10,
+                'width': 7,
+                'height': 5
+            },
+        ]
+        tariffs = [
+            {'id': 136, 'priority': 1},
+            {'id': 137, 'priority': 2},
+            {'id': 233, 'priority': 3},
+            {'id': 234, 'priority': 4},
+            {'id': 291, 'priority': 5},
+            {'id': 294, 'priority': 6}
+        ]
+        services = [
+            {
+                'id': 2,
+                'param': 3000
+            }
+        ]
+        res = self.api.calc_price(44, 137, goods, tariff_list=tariffs, services=services)
+        res2 = self.api.calc_price(44, 137, goods, tariff_list=tariffs, services=services, decimal_places=2)
+        print(res)
+        print(res2)
+        self.assertEqual(res['result']['price'], round(res['result']['price'], 2))
+
     def test_calc_prices(self):
         goods = [
                     {
