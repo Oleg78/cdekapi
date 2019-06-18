@@ -1,11 +1,12 @@
 import unittest
 import os
 import datetime
+import xml.etree.ElementTree as ET
 
 from cdekapi import CdekApi, CdekAPIError
 
 
-class SimpleTest(unittest.TestCase): 
+class PostTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls): 
@@ -173,6 +174,26 @@ class SimpleTest(unittest.TestCase):
             code, res = self.api.calc_price_num(44, 269, goods, tariff_id=7)
         print(e.exception.args[0])
         self.assertEqual(e.exception.args[0]['error'][0]['code'], 3)
+
+
+class GetXmlTest(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.authLogin = os.environ['CDEK_LOGIN']
+        cls.secure = os.environ['CDEK_PASS']
+        cls.api = CdekApi(cls.authLogin, cls.secure)
+
+    def test_get_xml(self):
+        res = self.api.get_xml('pvz_list', cityid=270, allowedcod=1)
+        print(res)
+        root = ET.fromstring(res)
+        self.assertEqual(root.tag, 'PvzList')
+
+    def test_get_pvz_list(self):
+        res = self.api.get_pvz_list(270, 1)
+        print(res)
+        self.assertEqual(res['NSK33']['name'], 'На Дуси Ковальчук')
 
 
 if __name__ == '__main__': 

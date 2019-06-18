@@ -2,9 +2,11 @@ import datetime
 import json
 from hashlib import md5
 import requests
+import xml.etree.ElementTree as ET
+
 from cdekapi import calc_dictionaries
 
-VERSION = (0, 0, 4)
+VERSION = (0, 0, 5)
 
 
 def get_version():
@@ -33,6 +35,7 @@ class CdekApi:
     methods = {
         'calc_price': 'https://api.cdek.ru/calculator/calculate_price_by_json.php',
         'calc_prices': 'http://api.cdek.ru/calculator/calculate_tarifflist.php',
+        'pvz_list': 'http://integration.cdek.ru/pvzlist/v1/xml'
     }
     login = ''
     password = ''
@@ -50,7 +53,7 @@ class CdekApi:
 
     def run(self, method, data):
         """
-        Query the Yandex API v4
+        Query the CDEK API (POST)
         :param method:
         :param data: json data
         :return: json result
@@ -66,6 +69,23 @@ class CdekApi:
         if res.get('error', False):
             raise CdekAPIError(res)
         return res
+
+    def get_xml(self, method, **kwargs):
+        """
+        Query the CDEK API (GET)
+        :param method:
+        :param kwargs: GET parameters
+        :return: xml result
+        """
+        q = ''
+        for key, val in kwargs.items():
+            q += '&' if q > '' else ''
+            q += f'{key}={val}'
+        url = f'{self.methods[method]}?{q}'
+        response = requests.get(url)
+        if response.status_code != 200:
+            raise CdekAPIConnectionError(response)
+        return response.text
 
     def calc_price(self,
                    sender_city_id,
@@ -177,3 +197,28 @@ class CdekApi:
                               currency,
                               services)
         return int(res['result']['price'])
+
+    def get_pvz_list(self, city_id, np_allowed):
+        """
+        Get the list of pvz for a city
+        :param city_id: CDEK City Id
+        :param np_allowed: 1/0
+        :return: dict of pvz
+        """
+        res = self.get_xml('pvz_list', cityid=city_id, allowedcod=np_allowed)
+        root = ET.fromstring(res)
+        pvz_list = {}
+        for pvz in root:
+            pvz_list[pvz.attrib.get('Code')] = {
+                'name': pvz.attrib.get('Name'),
+                'city': pvz.attrib.get('City'),
+                'address': pvz.attrib.get('Address'),
+                'comment': pvz.attrib.get('AddressComment'),
+                'note': pvz.attrib.get('Note'),
+                'phone': pvz.attrib.get('Phone'),
+                'latitude': pvz.attrib.get('coordX'),
+                'longitude': pvz.attrib.get('coodrY'),
+                'type': pvz.attrib.get('Type'),
+                'np_allowed': pvz.attrib.get('AllowedCod'),
+            }
+        return pvz_list
