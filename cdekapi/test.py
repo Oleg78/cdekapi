@@ -193,7 +193,7 @@ class GetXmlTest(unittest.TestCase):
     def test_get_pvz_list(self):
         res = self.api.get_pvz_list(270, 1)
         print(res)
-        self.assertEqual(res['NSK33']['name'], 'На Дуси Ковальчук')
+        self.assertEqual(res[0]['name'], 'На Кропоткина')
 
 
 if __name__ == '__main__': 

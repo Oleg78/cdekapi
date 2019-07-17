@@ -207,9 +207,10 @@ class CdekApi:
         """
         res = self.get_xml('pvz_list', cityid=city_id, allowedcod=np_allowed)
         root = ET.fromstring(res)
-        pvz_list = {}
+        pvz_list = []
         for pvz in root:
-            pvz_list[pvz.attrib.get('Code')] = {
+            pvz_list.append({
+                'id': pvz.attrib.get('Code'),
                 'name': pvz.attrib.get('Name'),
                 'city': pvz.attrib.get('City'),
                 'address': pvz.attrib.get('Address'),
@@ -220,5 +221,5 @@ class CdekApi:
                 'longitude': pvz.attrib.get('coodrY'),
                 'type': pvz.attrib.get('Type'),
                 'np_allowed': pvz.attrib.get('AllowedCod'),
-            }
+            })
         return pvz_list
