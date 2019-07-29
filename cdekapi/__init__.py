@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 
 from cdekapi import calc_dictionaries
 
-VERSION = (0, 0, 5)
+VERSION = (0, 0, 7)
 
 
 def get_version():
@@ -32,24 +32,35 @@ class CdekApi:
     """
     Main class
     """
-    methods = {
-        'calc_price': 'https://api.cdek.ru/calculator/calculate_price_by_json.php',
-        'calc_prices': 'http://api.cdek.ru/calculator/calculate_tarifflist.php',
-        'pvz_list': 'http://integration.cdek.ru/pvzlist/v1/xml'
-    }
     login = ''
     password = ''
     version = '1.0'
     dicts = calc_dictionaries
 
-    def __init__(self, login=None, password=None):
+    def __init__(self, login=None, password=None, test_mode=False):
         """
         Create the api instance
         :param login: cdek login
         :param password: cdek password
         """
-        self.login = login
-        self.password = password
+        if test_mode:
+            self.login = 'z9GRRu7FxmO53CQ9cFfI6qiy32wpfTkd'
+            self.password = 'w24JTCv4MnAcuRTx0oHjHLDtyt3I6IBq'
+            self.methods = {
+                'calc_price': 'https://api.edu.cdek.ru/calculator/calculate_price_by_json.php',
+                'calc_prices': 'https://api.edu.cdek.ru/calculator/calculate_tarifflist.php',
+                'pvz_list': 'https://integration.edu.cdek.ru/pvzlist/v1/xml',
+                'new_order': 'https://integration.edu.cdek.ru/new_orders.php',
+            }
+        else:
+            self.login = login
+            self.password = password
+            self.methods = {
+                'calc_price': 'https://api.cdek.ru/calculator/calculate_price_by_json.php',
+                'calc_prices': 'https://api.cdek.ru/calculator/calculate_tarifflist.php',
+                'pvz_list': 'https://integration.cdek.ru/pvzlist/v1/xml',
+                'new_order': 'https://integration.cdek.ru/new_orders.php',
+            }
 
     def run(self, method, data):
         """
@@ -85,6 +96,22 @@ class CdekApi:
         response = requests.get(url)
         if response.status_code != 200:
             raise CdekAPIConnectionError(response)
+        return response.text
+
+    def post_xml(self, method, **kwargs):
+        """
+        Query the CDEK API (POST)
+        :param method:
+        :param kwargs: POST parameters
+        :return: xml result
+        """
+        data = {}
+        for key, val in kwargs.items():
+            data[key] = val
+        url = f'{self.methods[method]}'
+        response = requests.post(url, data=data)
+        if response.status_code != 200:
+            raise CdekAPIConnectionError(response.text)
         return response.text
 
     def calc_price(self,
@@ -223,3 +250,84 @@ class CdekApi:
                 'np_allowed': pvz.attrib.get('AllowedCod'),
             })
         return pvz_list
+
+    def new_order(self, order):
+        """
+        Create new order in cdek
+        :param order: dictionary with fields:
+            date
+            * number
+            * sender_city
+            * receiver_city
+            + tarifftypecode
+            + recepientname
+            + recepientemail
+            + phone
+            * address (one of sets):
+                1 street
+                1 house
+                1 flat
+                2 pvzcode
+            * packages[]:
+                weight
+                length
+                width
+                height
+                items[]:
+                    * amount
+                    * warekey
+                    * cost
+                    * payment
+                    * weight
+                    * comment
+        :return:
+        """
+        request = ET.Element('deliveryrequest')
+        request.set('account', self.login)
+        request.set('secure', self.password)
+        request.set('date', order.get('date', str(datetime.date.today()))),
+        request.set('number', '1')
+        request.set('ordercount', '1')
+        request_order = ET.SubElement(request, 'order')
+        request_order.set('number', str(order['number']))
+        request_order.set('sendcitycode', str(order['sender_city']))
+        request_order.set('reccitycode', str(order['receiver_city']))
+        request_order.set('tarifftypecode', str(order['tarifftypecode']))
+        request_order.set('recipientname', str(order['recipientname']))
+        request_order.set('recepientemail', str(order['recepientemail']))
+        request_order.set('phone', str(order['phone']))
+        address = ET.SubElement(request_order, 'address')
+        if order['address'].get('street'):
+            address.set('street', order['address'].get('street'))
+        if order['address'].get('house'):
+            address.set('house', str(order['address'].get('house')))
+        if order['address'].get('flat'):
+            address.set('flat', str(order['address'].get('flat')))
+        if order['address'].get('pvzcode'):
+            address.set('pvzcode', order['address'].get('pvzcode'))
+        package_number = 1
+        for order_package in order['packages']:
+            package = ET.SubElement(request_order, 'package')
+            package.set('number', str(package_number))
+            package.set('barcode', str(package_number))
+            package_number += 1
+            package.set('weight', str(order_package['weight']))
+            package.set('sizea', str(order_package['height']))
+            package.set('sizeb', str(order_package['width']))
+            package.set('sizec', str(order_package['length']))
+            for package_item in order_package['items']:
+                item = ET.SubElement(package, 'item')
+                item.set('amount', str(package_item['amount']))
+                item.set('warekey', package_item['warekey'])
+                item.set('cost', str(package_item['cost']))
+                item.set('payment', str(package_item['payment']))
+                item.set('weight', str(package_item['weight']))
+                item.set('comment', package_item['comment'])
+        data = ET.tostring(request, encoding='utf-8')
+        res = self.post_xml('new_order', xml_request=data)
+        root = ET.fromstring(res)
+        if root[0].get('ErrorCode'):
+            raise CdekAPIError(root[0].get('Msg'))
+        dispatch_number = root[0].get('DispatchNumber')
+        order_number = root[0].get('Number')
+        return order_number, dispatch_number

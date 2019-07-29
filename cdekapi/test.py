@@ -1,7 +1,7 @@
 import unittest
-import os
 import datetime
 import xml.etree.ElementTree as ET
+import uuid
 
 from cdekapi import CdekApi, CdekAPIError
 
@@ -9,12 +9,10 @@ from cdekapi import CdekApi, CdekAPIError
 class PostTest(unittest.TestCase):
 
     @classmethod
-    def setUpClass(cls): 
-        cls.authLogin = os.environ['CDEK_LOGIN']
-        cls.secure = os.environ['CDEK_PASS']
-        cls.api = CdekApi(cls.authLogin, cls.secure)
+    def setUpClass(cls):
+        cls.api = CdekApi(test_mode=True)
 
-    def test_dict(self): 
+    def test_dict(self):
         self.assertEqual(self.api.dicts.delivery_types[1], 'дверь-дверь')
 
     def test_run(self):
@@ -45,7 +43,6 @@ class PostTest(unittest.TestCase):
         res = self.api.run('calc_price', data)
         print(res)
         self.assertEqual(int(res['result']['deliveryPeriodMin']), 1)
-        # self.assertEqual(res['result']['deliveryDateMin'], (dt + delta).isoformat())
         self.assertEqual(int(res['result']['tariffId']), 136)
 
     def test_run_failed(self):
@@ -58,7 +55,7 @@ class PostTest(unittest.TestCase):
             'receiverCityId': '269',
             'currency': 'RUB',
             'tariffId': 7,
-            'goods': 
+            'goods':
                 [
                     {
                         'weight': '1',
@@ -68,7 +65,7 @@ class PostTest(unittest.TestCase):
                     }
                 ],
         }
-        with self.assertRaises(CdekAPIError) as e: 
+        with self.assertRaises(CdekAPIError) as e:
             self.api.run('calc_price', data)
         print(e.exception.args[0])
         self.assertEqual(e.exception.args[0]['error'][0]['code'], 3)
@@ -180,9 +177,7 @@ class GetXmlTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.authLogin = os.environ['CDEK_LOGIN']
-        cls.secure = os.environ['CDEK_PASS']
-        cls.api = CdekApi(cls.authLogin, cls.secure)
+        cls.api = CdekApi(test_mode=True)
 
     def test_get_xml(self):
         res = self.api.get_xml('pvz_list', cityid=270, allowedcod=1)
@@ -193,7 +188,49 @@ class GetXmlTest(unittest.TestCase):
     def test_get_pvz_list(self):
         res = self.api.get_pvz_list(270, 1)
         print(res)
-        self.assertEqual(res[0]['name'], 'На Кропоткина')
+        self.assertEqual(res[0]['name'], 'Академгородок')
+
+
+class OrderTest(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.api = CdekApi(test_mode=True)
+
+    def test_new_order(self):
+        order_no = str(uuid.uuid4())
+        order = {
+            'number': order_no,
+            'sender_city': 44,
+            'receiver_city': 137,
+            'tarifftypecode': 136,
+            'recipientname': 'Иванов Андрей Петрович',
+            'recepientemail': 'a@a.ru',
+            'phone': '5566656595',
+            'address': {
+                'pvzcode': 'SPB11'
+            },
+            'packages': [
+                {
+                    'weight': 100,
+                    'length': 40,
+                    'width': 30,
+                    'height': 30,
+                    'items': [
+                        {
+                            'amount': 1,
+                            'warekey': 'АРТ',
+                            'cost': 1000,
+                            'payment': 0,
+                            'weight': 100,
+                            'comment': 'no comment'
+                        }
+                    ]
+                }
+            ]
+        }
+        order_number, dispatch_number = self.api.new_order(order=order)
+        self.assertEqual(order_number, order_no)
 
 
 if __name__ == '__main__': 
