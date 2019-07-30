@@ -51,6 +51,7 @@ class CdekApi:
                 'calc_prices': 'https://api.edu.cdek.ru/calculator/calculate_tarifflist.php',
                 'pvz_list': 'https://integration.edu.cdek.ru/pvzlist/v1/xml',
                 'new_order': 'https://integration.edu.cdek.ru/new_orders.php',
+                'status': 'https://integration.edu.cdek.ru/status_report_h.php',
             }
         else:
             self.login = login
@@ -60,6 +61,7 @@ class CdekApi:
                 'calc_prices': 'https://api.cdek.ru/calculator/calculate_tarifflist.php',
                 'pvz_list': 'https://integration.cdek.ru/pvzlist/v1/xml',
                 'new_order': 'https://integration.cdek.ru/new_orders.php',
+                'status': 'https://integration.cdek.ru/status_report_h.php',
             }
 
     def run(self, method, data):
@@ -331,3 +333,33 @@ class CdekApi:
         dispatch_number = root[0].get('DispatchNumber')
         order_number = root[0].get('Number')
         return order_number, dispatch_number
+
+    def check_orders_status(self, orders):
+        """
+        Check orders status
+        :param orders: list of orders
+            {
+                order_number,
+                dispatch_number
+            }
+        :return: list of orders with statuses
+        """
+        request = ET.Element('statusreport')
+        request.set('account', self.login)
+        request.set('secure', self.password)
+        request.set('date', str(datetime.date.today())),
+        for order in orders:
+            request_order = ET.SubElement(request, 'order')
+            request_order.set('number', str(order['order_number']))
+            request_order.set('dispatch_number', str(order['dispatch_number']))
+        data = ET.tostring(request, encoding='utf-8')
+        res = self.post_xml('status', xml_request=data)
+        root = ET.fromstring(res)
+        if root.get('ErrorCode'):
+            raise CdekAPIError(root.get('Msg'))
+        ET.dump(root)
+        for order in root:
+            print('ORDER', order.attrib['Number'], order.attrib['DispatchNumber'])
+            status = order.find('Status')
+            print('STATUS', status.attrib['Date'], status.attrib['Code'], status.attrib['Description'])
+        return root
