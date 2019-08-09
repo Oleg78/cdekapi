@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 
 from cdekapi import calc_dictionaries
 
-VERSION = (0, 0, 81)
+VERSION = (0, 0, 82)
 
 
 def get_version():
@@ -296,8 +296,7 @@ class CdekApi:
         request_order.set('sendcitycode', str(order['sender_city']))
         request_order.set('reccitycode', str(order['receiver_city']))
         request_order.set('tarifftypecode', str(order['tarifftypecode']))
-        request_order.set('deliveryrecipientcost',
-                          str(order['deliveryrecipientcost']) if order['deliveryrecipientcost'] else 0)
+        request_order.set('deliveryrecipientcost', str(order['deliveryrecipientcost']))
         request_order.set('recipientname', str(order['recipientname']))
         request_order.set('recepientemail', str(order['recepientemail']))
         request_order.set('phone', str(order['phone']))
