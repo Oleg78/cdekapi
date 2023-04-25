@@ -204,6 +204,7 @@ class OrderTest(unittest.TestCase):
             'sender_city': 44,
             'receiver_city': 137,
             'tarifftypecode': 136,
+            'deliveryrecipientcost': 3,
             'recipientname': 'Иванов Андрей Петрович',
             'recepientemail': 'a@a.ru',
             'phone': '5566656595',
