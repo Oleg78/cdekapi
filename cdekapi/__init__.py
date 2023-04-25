@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 
 from cdekapi import calc_dictionaries
 
-VERSION = (0, 0, 82)
+VERSION = (0, 0, 83)
 
 
 def get_version():
