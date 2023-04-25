@@ -74,8 +74,12 @@ class CdekApi:
         if data['dateExecute']:
             data['authLogin'] = self.login
             data['secure'] = md5(f"{data['dateExecute']}&{self.password}".encode('utf-8')).hexdigest()
-
-        response = requests.post(self.methods[method], data=json.dumps(data, ensure_ascii=False).encode('utf8'))
+        headers = {
+            'Content-Type': 'application/json; charset=utf-8'
+        }
+        response = requests.post(self.methods[method],
+                                 data=json.dumps(data, ensure_ascii=False).encode('utf8'),
+                                 headers=headers)
         if response.status_code != 200:
             raise CdekAPIConnectionError(response)
         res = response.json()
@@ -96,6 +100,7 @@ class CdekApi:
             q += f'{key}={val}'
         url = f'{self.methods[method]}?{q}'
         response = requests.get(url)
+        response.encoding = 'utf-8'
         if response.status_code != 200:
             raise CdekAPIConnectionError(response)
         return response.text
